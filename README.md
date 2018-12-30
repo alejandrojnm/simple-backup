@@ -44,5 +44,3 @@ This project is licensed under the Apache License - see the [LICENSE.md](LICENSE
 * Hat tip to anyone whose code was used
 * Inspiration
 * etc
-
-``
