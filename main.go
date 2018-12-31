@@ -21,26 +21,27 @@ func init() {
 
 func main() {
 
-	//Flags
-	//S3
-	endpoint := flag.String("endpoint", "localhost:9000", "Endpoint to S3")
+	//Flags for the program
+	//S3 data
+	endPoint := flag.String("endpoint", "localhost:9000", "Endpoint to S3")
 	ak := flag.String("ak", "accesskey", "Access key")
 	sk := flag.String("sk", "secretkey", "Secret key")
-	secureendpoint := flag.Bool("secureendpoint", false, "Enabled secure endpoint")
-	//
+	secureEndPoint := flag.Bool("secureendpoint", false, "Enabled secure endpoint")
+	// other options
 	bucket := flag.String("bucket", "alamesa-db", "Buket Name")
-	bucketlocation := flag.String("bucketlocation", "us-east-1", "Bucket Zone")
-	backupdir := flag.String("backupdir", "backup", "Backup directory location")
+	bucketLocation := flag.String("bucketlocation", "us-east-1", "Bucket Zone")
+	backupDir := flag.String("backupdir", "backup", "Backup directory location")
 	flag.Parse()
 	//
 
-	s3Client, err := minio.New(*endpoint, *ak, *sk, *secureendpoint)
+	// Create a new client for the storage server
+	s3Client, err := minio.New(*endPoint, *ak, *sk, *secureEndPoint)
 	if err != nil {
 		log.Print(err)
 	}
 
 	//We send to create the bucket, if we do not do anything
-	err = s3Client.MakeBucket(*bucket, *bucketlocation)
+	err = s3Client.MakeBucket(*bucket, *bucketLocation)
 	if err != nil {
 		// Check to see if we already own this bucket (which happens if you run this twice)
 		exists, err := s3Client.BucketExists(*bucket)
@@ -51,24 +52,25 @@ func main() {
 		}
 	}
 
-	today_regex := []string{"*"}
-	listfile, _ := core.FindFile(*backupdir+"/", today_regex)
+	todayRegx := []string{"*"}
+	listFile, _ := core.FindFile(*backupDir+"/", todayRegx)
 
 	//We verify that there is something to upload and that there is no error
-	if len(listfile) != 0 {
-		for _, file := range listfile {
-			file_name := filepath.Base(file)
+	if len(listFile) != 0 {
+		// for all file in listFile we send to storage server
+		for _, file := range listFile {
+			fileName := filepath.Base(file)
 			//log.Printf(file_name)
-			n, err := s3Client.FPutObject(*bucket, jodaTime.Format("YYYYMMdd", time.Now())+"/"+file_name, file, minio.PutObjectOptions{ContentType: ""})
+			n, err := s3Client.FPutObject(*bucket, jodaTime.Format("YYYYMMdd", time.Now())+"/"+fileName, file, minio.PutObjectOptions{ContentType: ""})
 			if err != nil {
 				log.Fatalln(err)
 			}
-			log.Printf("Successfully uploaded %s of size %d\n", file_name, n)
+			log.Printf("Successfully uploaded %s of size %d\n", fileName, n)
 		}
 	}
 
 	objectsCh := make(chan string)
-	// Send object names that are needed to be removed to objectsCh
+	// Send object names that are needed to be removed to objectsCh in subroutine
 	go func() {
 		defer close(objectsCh)
 		doneCh := make(chan struct{})
@@ -86,7 +88,6 @@ func main() {
 
 	// Call RemoveObjects API
 	errorCh := s3Client.RemoveObjects(*bucket, objectsCh)
-
 	// Print errors received from RemoveObjects API
 	for e := range errorCh {
 		log.Fatalln("Failed to remove " + e.ObjectName + ", error: " + e.Err.Error())
