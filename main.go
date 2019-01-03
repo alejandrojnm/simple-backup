@@ -31,8 +31,18 @@ func main() {
 	bucket := flag.String("bucket", "alamesa-db", "Buket Name")
 	bucketLocation := flag.String("bucketlocation", "us-east-1", "Bucket Zone")
 	backupDir := flag.String("backupdir", "backup", "Backup directory location")
+	dayToDelete := flag.Float64("daytodelete", 7, "Days to delete old files from (backup dir)")
 	flag.Parse()
 	//
+
+	/*
+		I could create a subroutine to do this but then,
+		if there are many files to be deleted,
+		things that should be deleted would be uploaded to the backup,
+		so it is not put as a subroutine, it is expected that everything will be
+		erased and then the backup will be made
+	*/
+	core.RemoveOldFile(*backupDir, *dayToDelete)
 
 	// Create a new client for the storage server
 	s3Client, err := minio.New(*endPoint, *ak, *sk, *secureEndPoint)
@@ -60,7 +70,7 @@ func main() {
 		// for all file in listFile we send to storage server
 		for _, file := range listFile {
 			fileName := filepath.Base(file)
-			//log.Printf(file_name)
+			// We save the file inside a folder with a name that is today's date
 			n, err := s3Client.FPutObject(*bucket, jodaTime.Format("YYYYMMdd", time.Now())+"/"+fileName, file, minio.PutObjectOptions{ContentType: ""})
 			if err != nil {
 				log.Fatalln(err)

@@ -23,7 +23,7 @@ other way is download binary for your system, in the release page
 
 Copy binary for `/usr/local/bin/` then create cron
 
-`00 2 * * *   root  simple-backup --endpoint=localhost:9000 --ak=accesskey --sk=secretkey --secureendpoint=(true|false) --bucket=system-backup --bucketlocation=us-east-1 --backudir=/srv/backup/mysql`
+`00 2 * * *   root  simple-backup --endpoint=localhost:9000 --ak=accesskey --sk=secretkey --secureendpoint=(true|false) --bucket=system-backup --bucketlocation=us-east-1 --backudir=/srv/backup/mysql/ --daytodelete=7`
 
 You can run ``simple-backup -h`` to see help, simple-backup delete all backup from storage server older than 7 days
 
